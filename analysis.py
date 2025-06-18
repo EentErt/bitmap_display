@@ -44,4 +44,14 @@ def get_values(pixel_array):
             new_array[-1].append(pixel_value)
     return new_array
 
+def get_peak values(value_array):
+    counts = {}
+    for row in value_array:
+        for value in row:
+            if value not in counts:
+                counts[value] = 0
+            counts[value] += 1
+    
+
+
 # def hex_to_values(data):
