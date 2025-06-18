@@ -10,8 +10,10 @@ class PixelArray():
         self.height = height
         self.value_array = value_array
         self.normalize()
+        self.compress(4)
         self.list_array = [] # A list of lists of pixels as clusters
-        self.collapse()
+        self.combine()
+        self.collapse_r(4)
         self.char_array = [] # A list of strings representing the rows of the image
         self.list_array_to_char_array()
 
@@ -30,7 +32,7 @@ class PixelArray():
     '''
     
     # collapse pixels into pixel pairs because console characters are 2 high and 1 wide
-    def collapse(self):
+    def combine(self):
         self.depth += 1
         for i in range(0, len(self.value_array), 2):
             # For every two rows, add a list to list_array
@@ -43,16 +45,51 @@ class PixelArray():
 
 
     # collapse pixel pairs into pixel clusters
-    def collapse_r(self):
+    def collapse_r(self, depth):
         new_array = []
-        for i in range(len(0, self.list_array, 2)):
-            for j in range(len(0, self.list_array[i], 2)):
+        if depth == 0:
+            return None
+        for i in range(0, len(self.list_array), 2):
+            for j in range(0, len(self.list_array[i]), 2):
                 new_array.append(self.list_array[i][j])
-                new_array.append(self.list_array[i+1][j])
-                new_array.append(self.list_array[i][j+1])
-                new_array.append(self.list_array[i+1][j+1])
+                if len(self.list_array) >= i+1 and len(self.list_array[i]) >= j+1:
+                    new_array.append(self.list_array[i+1][j])
+                    new_array.append(self.list_array[i][j+1])
+                    new_array.append(self.list_array[i+1][j+1])
+                elif len(self.list_array) >= i+1:
+                    new_array.append(self.list_array[i+1][j])
+                    new_array.append((0, 0,))
+                    new_array.append((0, 0,))
+                elif len(self.list_array[i]) >= j+1:
+                    new_array.append((0, 0,))
+                    new_array.append(self.list_array[i][j+1])
+                    new_array.append((0, 0,))
+                else:
+                    new_array.append((0, 0,))
+                    new_array.append((0, 0,))
+                    new_array.append((0, 0,))
+        return self.collapse_r(depth - 1)
     
-
+    def compress(self, depth):
+        # compress 4 values into a new value
+        while depth > 0:
+            print("compressing")
+            new_value_array = []
+            for i in range(len(self.value_array)):
+                new_value_array.append([])
+                for j in range(len(self.value_array[i])):
+                    if i + 1 < self.height and j + 1 < self.width:
+                        new_value_array[i].append((self.value_array[i][j] + self.value_array[i+1][j] + self.value_array[i][j+1] + self.value_array[i+1][j+1]) // 4)
+                    elif i + 1 < self.height and j + 1 == self.width:
+                        new_value_array[i].append((self.value_array[i][j] + self.value_array[i+1][j]) // 2)
+                    elif i + 1 == self.height and j + 1 < self.width:
+                        new_value_array[i].append((self.value_array[i][j] + self.value_array[i][j+1]) // 2)
+                    else:
+                        new_value_array[i].append(self.value_array[i][j])
+            self.value_array = new_value_array
+            #self.width = round(self.width / 2)
+            #self.height = round(self.height / 2)
+            depth -= 1
 
 
         
