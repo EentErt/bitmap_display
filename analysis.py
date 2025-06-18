@@ -44,11 +44,11 @@ def get_values(pixel_array):
             new_array[-1].append(pixel_value)
     return new_array
 
-def get_peak values(value_array):
-    counts = {}
+def get_peak_values(value_array):
+    counts = []
     for row in value_array:
         for value in row:
-            if value not in counts:
+            if counts[value] is None:
                 counts[value] = 0
             counts[value] += 1
     

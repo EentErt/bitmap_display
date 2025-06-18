@@ -14,24 +14,33 @@ class PixelArray():
         self.width = width
         self.char_width = self.width
         self.height = height
+        self.value_array_original = value_array
         self.value_array = value_array
-        self.compressed_array = []
-        self.normalize()
-        # self.compress(2)
+        self.normalize(50, 250, 100)
+        self.compress(1)
         self.list_array = [] # A list of lists of pixels as clusters
         self.combine()
-        self.collapse(4)
+        self.collapse()
         self.char_array = [] # A list of strings representing the rows of the image
-        self.list_array_to_char_array()
+        self.list_array_to_char_array("braille")
 
     def to_utf(self, depth):
         return
 
     # normalize values, this might not be needed.
-    def normalize(self):
-        self.value_array = list(map(lambda y: list(map(lambda x: round(x / 255), y)), self.value_array))
+    def normalize(self, black=0, white=255, gray=127):
+        for i in range(len(self.value_array)):
+            for j in range(len(self.value_array[i])):
+                if self.value_array[i][j] >= white:
+                    self.value_array[i][j] = 1
+                elif self.value_array[i][j] <= black:
+                    self.value_array[i][j] = 0
+                elif self.value_array[i][j] >= gray:
+                    self.value_array[i][j] = 1
+                else:
+                    self.value_array[i][j] = 0
+        #self.value_array = list(map(lambda y: list(map(lambda x: round(x / 255), y)), self.value_array))
 
-    
     # combine pixels into pixel pairs because console characters are 2 high and 1 wide
     def combine(self):
         self.depth += 1
@@ -44,12 +53,9 @@ class PixelArray():
                 else:
                     self.list_array[i//2].append((self.value_array[i][j], self.value_array[i+1][j],))
 
-
     # collapse pixel pairs into pixel clusters
-    def collapse(self, depth):
+    def collapse(self):
         new_array = []
-        if depth == 0:
-            return
         for i in range(0, len(self.list_array), 2):
             new_array.append([])
             for j in range(0, len(self.list_array[i]), 2):
@@ -59,9 +65,9 @@ class PixelArray():
                     pair_3 = (0, 0,)
                     pair_4 = (0, 0,)
                 if i+1 < len(self.list_array):
-                    pair_3 = self.list_array[i+1][j]
+                    pair_2 = self.list_array[i+1][j]
                 if j+1 < len(self.list_array[i]):
-                    pair_2 = self.list_array[i][j+1]
+                    pair_3 = self.list_array[i][j+1]
                 if i+1 < len(self.list_array) and j+1 < len(self.list_array[i]):
                     pair_4 = self.list_array[i+1][j+1]
                 cluster = pair_1 + pair_2 + pair_3 + pair_4
@@ -69,8 +75,8 @@ class PixelArray():
         self.depth += 1
         self.list_array = new_array
     
+    # compress 4 values into a single value to reduce image size
     def compress(self, depth):
-        # compress 4 values into a new value
         if depth == 0:
             return
         while depth > 0:
@@ -98,24 +104,16 @@ class PixelArray():
                 self.height = self.height // 2 + 1
             depth -= 1
         
-
-
-
-        
-    
-    def list_array_to_char_array(self):
-        char_map = get_char_map(self.depth)
+    def list_array_to_char_array(self, output_type):
         for i in range(len(self.list_array)):
             self.char_array.append("")
             for cluster in self.list_array[i]:
-                if cluster in char_map:
-                    self.char_array.append(char_map.get(cluster))
-                else:
-                    value = (sum(cluster) / len(cluster)) // 0.25
-                    self.char_array.append(get_char_map("value").get(value))
+                char = get_char_map(output_type, cluster)
+                if char is None:
+                    char = get_char_map("value", (sum(cluster) / len(cluster))//.25)
+                self.char_array.append(char)          
             self.char_array.append("\n")
         self.depth += 1
-        print(char_map)
 
     def __repr__(self):
         if self.depth == 0:
