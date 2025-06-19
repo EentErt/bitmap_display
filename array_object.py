@@ -9,25 +9,26 @@ class ArrayObject():
 
 class PixelArray():
     def __init__(self, width, height, value_array):
-        self.status = "value array"
+        self.display = "value"
         self.depth = 0 # The depth of current collapse. 0 = raw pixel data, 1 = pixel pairs, n = 2+ -> clusters of size 2 ^ n
         self.width = width
         self.char_width = self.width
         self.height = height
         self.value_array_original = value_array
         self.value_array = value_array
-        self.normalize(50, 250, 100)
-        self.compress(1)
+        self.black = 0
+        self.white = 255
+        self.gray = 127
+        self.compression = 0
+        self.normalize()
+        # self.compress(2)
         self.list_array = [] # A list of lists of pixels as clusters
         self.combine()
         self.collapse()
-        self.char_array = [] # A list of strings representing the rows of the image
-        self.list_array_to_char_array("braille")
+        self.char_array = []
+        self.list_array_to_char_array(self.display)
 
-    def to_utf(self, depth):
-        return
-
-    # normalize values, this might not be needed.
+    # normalize values
     def normalize(self, black=0, white=255, gray=127):
         for i in range(len(self.value_array)):
             for j in range(len(self.value_array[i])):
@@ -43,12 +44,13 @@ class PixelArray():
 
     # combine pixels into pixel pairs because console characters are 2 high and 1 wide
     def combine(self):
+        self.list_array = []
         self.depth += 1
         for i in range(0, len(self.value_array), 2):
             # For every two rows, add a list to list_array
             self.list_array.append([])
             for j in range(len(self.value_array[i])):
-                if i == self.height - 1:
+                if i+1 == len(self.value_array):
                     self.list_array[i//2].append((self.value_array[i][j], 0,))
                 else:
                     self.list_array[i//2].append((self.value_array[i][j], self.value_array[i+1][j],))
@@ -102,8 +104,11 @@ class PixelArray():
                 self.height /= 2
             else:
                 self.height = self.height // 2 + 1
+            self.compression += 1
             depth -= 1
-        
+        self.refresh()
+
+    # convert pixel clusters into characters
     def list_array_to_char_array(self, output_type):
         for i in range(len(self.list_array)):
             self.char_array.append("")
@@ -114,6 +119,24 @@ class PixelArray():
                 self.char_array.append(char)          
             self.char_array.append("\n")
         self.depth += 1
+
+    # rebuild character_array
+    def refresh(self):
+        self.combine()
+        self.collapse()
+        self.char_array = []
+        self.list_array_to_char_array(self.display)
+
+    # rebuild list_array
+    def renew(self):
+        self.value_array = self.value_array_original
+        self.normalize(self.black, self.white, self.gray)
+        compression = self.compression
+        self.compression = 0
+        self.compress(compression)
+        self.list_array = []
+        self.refresh()
+
 
     def __repr__(self):
         if self.depth == 0:

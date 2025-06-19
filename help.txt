@@ -1,0 +1,16 @@
+Commands:
+    Compress: Compress values to reduce image size
+    Black: Set black level of image (0 - 255)
+    Gray: Set gray level of image (0 - 255)
+    White: Set white level of image (0 - 255)
+    Display: Choose the render style of the image
+        Values: Display a value representation of the image
+        Dots: Display a dot representation of the image
+        Characters: Display a character representation of the image
+
+Syntax: Enter a command and a value to perform that command
+    (Black 50) Sets the black level of the image to 50
+
+Enter "Back" to return
+
+    

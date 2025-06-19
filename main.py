@@ -24,7 +24,7 @@ def main():
         user_input = input("Input command: ")
         if user_input.upper() == "EXIT":
             break
-        iterpret(user_input)
+        interpret(user_input, array)
         
         
 
