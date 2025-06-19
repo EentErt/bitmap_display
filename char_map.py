@@ -14,7 +14,7 @@ def value_to_char(value):
         return "/"
 
 def get_char_map(depth, cluster):
-    if depth == "braille":
+    if depth == "DOTS":
         return get_braille(cluster)
     char_dict = {
         0: {
@@ -27,7 +27,7 @@ def get_char_map(depth, cluster):
             (0, 1,): "\u2584",
             (0, 0,): " "
         },
-        2: {
+        "CHARACTERS": {
             (1, 1, 1, 1, 1, 1, 1, 1,): "B", # ⣿
             (1, 1, 1, 1, 1, 1, 1, 0,): "9", # ⡿
             (1, 1, 1, 1, 1, 1, 0, 0,): "P", # ⡟
@@ -60,7 +60,7 @@ def get_char_map(depth, cluster):
             (0, 0, 1, 1, 0, 0, 1, 1,): "|",
             (0, 0, 0, 0, 0, 0, 0, 0,): " "
         },
-        "value": {
+        "VALUE": {
             0: " ",
             1: "\u2591",
             2: "\u2592",
@@ -73,9 +73,13 @@ def get_char_map(depth, cluster):
     return char_dict[depth].get(cluster)
 
 def get_braille(eight_cluster):
-    # braille is a binary representation of the number, starting at \u2800
+    # braille is almost a binary representation of the number, starting at \u2800
+    # input pits are                01234567
+    # bits from top to bottom, are  01263457
     bit_string = ''.join(map(str, eight_cluster))
-    return chr(ord("\u2800") + int(bit_string, 2))
+    bit_string = bit_string[:3] + bit_string[4:7] + bit_string[3] + bit_string[7]
+    bit_string = bit_string[::-1]
+    return (chr(ord("\u2800") + int(bit_string, 2)))
 
 
 

@@ -1,4 +1,5 @@
 from char_map import get_char_map
+import copy
 import math
 
 class ArrayObject():
@@ -9,19 +10,18 @@ class ArrayObject():
 
 class PixelArray():
     def __init__(self, width, height, value_array):
-        self.display = "value"
+        self.display = "VALUE"
         self.depth = 0 # The depth of current collapse. 0 = raw pixel data, 1 = pixel pairs, n = 2+ -> clusters of size 2 ^ n
         self.width = width
         self.char_width = self.width
         self.height = height
         self.value_array_original = value_array
-        self.value_array = value_array
+        self.value_array = copy.deepcopy(value_array)
         self.black = 0
         self.white = 255
         self.gray = 127
         self.compression = 0
         self.normalize()
-        # self.compress(2)
         self.list_array = [] # A list of lists of pixels as clusters
         self.combine()
         self.collapse()
@@ -81,6 +81,8 @@ class PixelArray():
     def compress(self, depth):
         if depth == 0:
             return
+        if len(self.value_array) <=2 or len(self.value_array[0]) <= 2:
+            raise Exception("image can not be compressed further")
         while depth > 0:
             print("Compressing")
             new_value_array = []
@@ -108,6 +110,16 @@ class PixelArray():
             depth -= 1
         self.refresh()
 
+    # expand by rebuilding the array at a lower compression level, if depth = 0, rebuild at full size
+    def expand(self, depth = 1):
+        if self.compression == 0:
+            raise Exception("Image is full size and can not be expanded further.")
+        if depth == 0:
+            self.compression = 0
+        else:
+            self.compression -= depth
+        self.renew()
+
     # convert pixel clusters into characters
     def list_array_to_char_array(self, output_type):
         for i in range(len(self.list_array)):
@@ -115,13 +127,14 @@ class PixelArray():
             for cluster in self.list_array[i]:
                 char = get_char_map(output_type, cluster)
                 if char is None:
-                    char = get_char_map("value", (sum(cluster) / len(cluster))//.25)
+                    char = get_char_map("VALUE", (sum(cluster) / len(cluster))//.25)
                 self.char_array.append(char)          
             self.char_array.append("\n")
         self.depth += 1
 
     # rebuild character_array
     def refresh(self):
+        self.depth = 0
         self.combine()
         self.collapse()
         self.char_array = []
@@ -129,14 +142,41 @@ class PixelArray():
 
     # rebuild list_array
     def renew(self):
-        self.value_array = self.value_array_original
+        self.value_array = copy.deepcopy(self.value_array_original)
         self.normalize(self.black, self.white, self.gray)
         compression = self.compression
         self.compression = 0
         self.compress(compression)
-        self.list_array = []
         self.refresh()
 
+    # set a level
+    def set_level(self, level, value):
+        value = int(value)
+        if level == "BLACK":
+            if value >= self.gray or value >= self.white:
+                raise ValueError(f"Black level must be below gray({self.gray}) and white({self.white}) levels")
+            self.black = value
+        elif level == "WHITE":
+            if value <= self.black or value <= self.gray:
+                raise ValueError(f"White level must be above gray({self.gray}) and white({self.white}) levels")
+            self.white = value
+        else:
+            if value <= self.black or value >= self.white:
+                raise ValueError(f"Gray level must be between black({self.black}) and white({self.white}) levels")
+            self.gray = value
+        self.renew()
+
+    # return size of the output (width, height)
+    def get_size(self):
+        return len(self.list_array[0]), len(self.list_array)
+
+    # set the display mode
+    def set_display_mode(self, mode):
+        if mode == "VALUE" or mode == "DOTS" or mode == "CHARACTERS":
+            self.display = mode
+            self.refresh()
+        else:
+            raise ValueError(f'Unrecognized display type "{mode.lower()}"')
 
     def __repr__(self):
         if self.depth == 0:
