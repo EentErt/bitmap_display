@@ -4,14 +4,11 @@ def analyze(data):
     # Header starts with BM (0x424d)
     if not data.startswith('424d'):
         raise ValueError("File is not a bitmap file.")
-    # data = data[4:]
 
     # the next 4 bytes are the file size
-    # !!!!!!!!!! Check this logic for file sizes ending in 0
     file_size = int(data[4:12].rstrip('0'), 16)
 
-    # The next 4 bytes are reserved (not sure what this means)
-
+    # The next 4 bytes are reserved (not sure what this means
     # The next 4 bytes are the offset to the pixel array
     offset = int(data[20:28].rstrip('0'), 16)
     image = data[offset*2:]

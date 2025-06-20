@@ -33,7 +33,8 @@ def interpret(array, data):
 
     if data.upper() == "DISPLAY":
         try:
-            change_display(array)
+            message = change_display(array)
+            return message
         except Exception as e:
             return e
 
@@ -51,32 +52,60 @@ def interpret(array, data):
 def interpret_long(array, data):
     if len(data) > 2:
         raise ValueError("Invalid command. Please try again.")
-    if data[0].upper() == "BLACK" or data[0].upper() == "WHITE" or data[0].upper() == "GRAY":
+    if len(data) < 2:
+        print(f'Enter a valid {data[0].lower()} level, or enter "back" to cancel')
+        value = input("Enter value: ")
+        if value.upper() == "BACK":
+            return
+    else:
+        value = data[1]
+
+    if data[0].upper() == "THRESHOLD":
         while True:
             try:
-                array.set_level(*data)
+                array.set_threshold(value)
                 return
             except Exception as e:
                 print(e)
-                print(f'Enter a valid {data[0].lower()} level, or enter "back" to cancel')
+                print(f'Enter a valid threshold level, or enter "back" to cancel')
                 value = input("Enter value: ")
                 if value.upper() == "BACK":
                     return
                 data[1] = value
+
+    if data[0].upper() == "HIGHLIGHT":
+        while True:
+            try:
+                array.set_highlight(value)
+                return
+            except Exception as e:
+                print(e)
+                print(f'Enter a valid highlight level, or enter "back" to cancel')
+                value = input("Enter value: ")
+                if value.upper() == "BACK":
+                    return
+                data[1] = value
+
     if data[0].upper() == "DISPLAY":
-        return change_display(array, data[1])
+        change_display(array, data[1])
+
     if data[0].upper() == "SAVE":
         return save_data(array, data[1])
 
 def change_display(array, mode = None):
     while True:
-        if mode is None or mode == "DISPLAY":
+        if mode is None or mode.upper() == "DISPLAY":
             with open("display.txt") as file:
                 print(file.read())
             mode = input("Enter display mode: ")
-        if mode.upper() == "VALUE" or mode.upper() == "DOTS" or mode.upper() == "CHARACTERS":
+        try:
             array.set_display_mode(mode.upper())
-            return None
-        else:
-            raise Exception('Enter a valid display mode, or enter "Back" to cancel. To see a list of display modes, enter "Display"')
+            return f'Display mode set to "{mode.lower()}"'
+        except Exception as e:
+            print(e)
+            print(f'Enter a valid display mode, or enter "back" to cancel')
+            value = input("Enter value: ")
+            if value.upper() == "BACK":
+                return
+            mode = value
     

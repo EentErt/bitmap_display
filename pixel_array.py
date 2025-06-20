@@ -6,17 +6,14 @@ def create_pixel_array(image_dict):
     pixel_array = []
 
     '''
-    each line may end with padding, if the length of a line is odd, so we subtract the last two
-    characters for every line. 
+    each line may end with padding if the length of a line is not a multiple of 4,
+    so we subtract the padding from every line. 
     Each pixel is 6 bytes, so we divide by 6 to get the number of pixels.
     '''
     pixel_count = 0
     padding = 0
-    if image_dict["width"] % 2 != 0:
-        pixel_count = (len(image_dict["image"]) - (2 * image_dict["height"])) // 6
-        padding = 2
-    else:
-        pixel_count = (len(image_dict["image"])) // 6
+    padding = (image_dict["width"] % 4) *2
+    pixel_count = (len(image_dict["image"]) - (padding * image_dict["height"])) // 6
     pixel_width = pixel_count // image_dict["height"]
     image = image_dict["image"]
 

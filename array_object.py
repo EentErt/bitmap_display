@@ -2,12 +2,6 @@ from char_map import get_char_map
 import copy
 import math
 
-class ArrayObject():
-    def __init__(width, height, array):
-        self.width = width
-        self.height = height
-        self.array = array
-
 class PixelArray():
     def __init__(self, width, height, value_array):
         self.display = "VALUE"
@@ -17,9 +11,9 @@ class PixelArray():
         self.height = height
         self.value_array_original = value_array
         self.value_array = copy.deepcopy(value_array)
-        self.black = 0
-        self.white = 255
-        self.gray = 127
+        self.normal_array = 
+        self.threshold = 127
+        self.highlight = 255
         self.compression = 0
         self.normalize()
         self.list_array = [] # A list of lists of pixels as clusters
@@ -29,14 +23,10 @@ class PixelArray():
         self.list_array_to_char_array(self.display)
 
     # normalize values
-    def normalize(self, black=0, white=255, gray=127):
+    def normalize(self, threshold = 127):
         for i in range(len(self.value_array)):
             for j in range(len(self.value_array[i])):
-                if self.value_array[i][j] >= white:
-                    self.value_array[i][j] = 1
-                elif self.value_array[i][j] <= black:
-                    self.value_array[i][j] = 0
-                elif self.value_array[i][j] >= gray:
+                if self.value_array[i][j] >= threshold:
                     self.value_array[i][j] = 1
                 else:
                     self.value_array[i][j] = 0
@@ -84,19 +74,12 @@ class PixelArray():
         if len(self.value_array) <=2 or len(self.value_array[0]) <= 2:
             raise Exception("image can not be compressed further")
         while depth > 0:
-            print("Compressing")
+            print("Compressing...")
             new_value_array = []
             for i in range(0, len(self.value_array), 2):
                 new_value_array.append([])
                 for j in range(0, len(self.value_array[i]), 2):
-                    if i + 1 < self.height and j + 1 < self.width:
-                        new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i+1][j] + self.value_array[i][j+1] + self.value_array[i+1][j+1]) // 4)
-                    elif i + 1 < self.height and j + 1 == self.width:
-                        new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i+1][j]) // 2)
-                    elif i + 1 == self.height and j + 1 < self.width:
-                        new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i][j+1]) // 2)
-                    else:
-                        new_value_array[i//2].append(self.value_array[i][j])
+                    new_value_array[i//2].append(self.compress_values(i, j))
             self.value_array = new_value_array
             if self.width % 2 == 0:
                 self.width /= 2
@@ -109,6 +92,35 @@ class PixelArray():
             self.compression += 1
             depth -= 1
         self.refresh()
+    
+    # helper function for compress
+    def compress_values(self, i, j):
+        pixel_values = [self.value_array[i][j]]
+        if i + 1 < len(self.value_array):
+            pixel_values.append(self.value_array[i+1][j])
+        if j + 1 < len(self.value_array[i]):
+            pixel_values.append(self.value_array[i][j+1])
+        if i + 1 < len(self.value_array) and j + 1 < len(self.value_array[i]):
+            pixel_values.append(self.value_array[i+1][j+1])
+        
+        # when compression takes place, an especially light pixel takes precedence to maintain detail
+        average_value = sum(pixel_values) // len(pixel_values)
+        for pixel_value in pixel_values:
+            if pixel_value > self.highlight:
+                return pixel_value
+        return average_value
+        
+        
+        '''
+        if i + 1 < self.height and j + 1 < self.width:
+            new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i+1][j] + self.value_array[i][j+1] + self.value_array[i+1][j+1]) // 4)
+        elif i + 1 < self.height and j + 1 == self.width:
+            new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i+1][j]) // 2)
+        elif i + 1 == self.height and j + 1 < self.width:
+            new_value_array[i//2].append((self.value_array[i][j] + self.value_array[i][j+1]) // 2)
+        else:
+            new_value_array[i//2].append(self.value_array[i][j])
+        '''
 
     # expand by rebuilding the array at a lower compression level, if depth = 0, rebuild at full size
     def expand(self, depth = 1):
@@ -135,6 +147,7 @@ class PixelArray():
     # rebuild character_array
     def refresh(self):
         self.depth = 0
+        self.normalize(self.threshold)
         self.combine()
         self.collapse()
         self.char_array = []
@@ -143,32 +156,30 @@ class PixelArray():
     # rebuild list_array
     def renew(self):
         self.value_array = copy.deepcopy(self.value_array_original)
-        self.normalize(self.black, self.white, self.gray)
         compression = self.compression
         self.compression = 0
         self.compress(compression)
         self.refresh()
 
-    # set a level
-    def set_level(self, level, value):
+    # set the threshold level
+    def set_threshold(self, value):
         value = int(value)
-        if level == "BLACK":
-            if value >= self.gray or value >= self.white:
-                raise ValueError(f"Black level must be below gray({self.gray}) and white({self.white}) levels")
-            self.black = value
-        elif level == "WHITE":
-            if value <= self.black or value <= self.gray:
-                raise ValueError(f"White level must be above gray({self.gray}) and white({self.white}) levels")
-            self.white = value
-        else:
-            if value <= self.black or value >= self.white:
-                raise ValueError(f"Gray level must be between black({self.black}) and white({self.white}) levels")
-            self.gray = value
+        if value <= 0 or value >= 255:
+            raise ValueError(f"Threshold must be between 0 and 255")
+        self.threshold = value
+        self.renew()
+
+    # set the highlight level
+    def set_highlight(self, value):
+        value = int(value)
+        if value <= 0 or value >= 255:
+            raise ValueError(f"Highlight value must be between 0 and 255")
+        self.highlight = value
         self.renew()
 
     # return size of the output (width, height)
     def get_size(self):
-        return len(self.list_array[0]), len(self.list_array)
+        return len(self.value_array[0]), len(self.value_array)//2
 
     # set the display mode
     def set_display_mode(self, mode):

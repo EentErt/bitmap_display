@@ -31,7 +31,7 @@ def main():
         warning = f'Image compressed {array.compression} times to fit in terminal. Enter "expand" to expand the image or "full" to see full size'
     
     while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
+        #os.system('cls' if os.name == 'nt' else 'clear')
         print(image_name)
         print(array)
         if warning is not None:
