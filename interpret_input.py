@@ -98,6 +98,11 @@ def change_display(array, mode = None):
             with open("display.txt") as file:
                 print(file.read())
             mode = input("Enter display mode: ")
+
+        if mode.upper() == "EDGES":
+            array.find_edges()
+            return f'Display mode set to "edges"'
+
         try:
             array.set_display_mode(mode.upper())
             return f'Display mode set to "{mode.lower()}"'

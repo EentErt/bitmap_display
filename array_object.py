@@ -4,48 +4,51 @@ import math
 
 class PixelArray():
     def __init__(self, width, height, value_array):
-        self.display = "VALUE"
+        self.display = ["VALUE", "FILL"]
         self.depth = 0 # The depth of current collapse. 0 = raw pixel data, 1 = pixel pairs, n = 2+ -> clusters of size 2 ^ n
         self.width = width
         self.char_width = self.width
         self.height = height
         self.value_array_original = value_array
         self.value_array = copy.deepcopy(value_array)
-        self.normal_array = 
         self.threshold = 127
         self.highlight = 255
         self.compression = 0
+        self.normal_array = []
         self.normalize()
+        print(self.normal_array)
         self.list_array = [] # A list of lists of pixels as clusters
         self.combine()
         self.collapse()
         self.char_array = []
-        self.list_array_to_char_array(self.display)
+        self.list_array_to_char_array(self.display[0])
 
     # normalize values
     def normalize(self, threshold = 127):
+        self.normal_array = []
         for i in range(len(self.value_array)):
+            self.normal_array.append([])
             for j in range(len(self.value_array[i])):
                 if self.value_array[i][j] >= threshold:
-                    self.value_array[i][j] = 1
+                    self.normal_array[i].append(1)
                 else:
-                    self.value_array[i][j] = 0
+                    self.normal_array[i].append(0)
         #self.value_array = list(map(lambda y: list(map(lambda x: round(x / 255), y)), self.value_array))
 
     # combine pixels into pixel pairs because console characters are 2 high and 1 wide
     def combine(self):
         self.list_array = []
         self.depth += 1
-        for i in range(0, len(self.value_array), 2):
+        for i in range(0, len(self.normal_array), 2):
             # For every two rows, add a list to list_array
             self.list_array.append([])
-            for j in range(len(self.value_array[i])):
-                if i+1 == len(self.value_array):
-                    self.list_array[i//2].append((self.value_array[i][j], 0,))
+            for j in range(len(self.normal_array[i])):
+                if i+1 == len(self.normal_array):
+                    self.list_array[i//2].append((self.normal_array[i][j], 0,))
                 else:
-                    self.list_array[i//2].append((self.value_array[i][j], self.value_array[i+1][j],))
+                    self.list_array[i//2].append((self.normal_array[i][j], self.normal_array[i+1][j],))
 
-    # collapse pixel pairs into pixel clusters
+    # collapse list_array -> pixel pairs into pixel clusters
     def collapse(self):
         new_array = []
         for i in range(0, len(self.list_array), 2):
@@ -106,7 +109,7 @@ class PixelArray():
         # when compression takes place, an especially light pixel takes precedence to maintain detail
         average_value = sum(pixel_values) // len(pixel_values)
         for pixel_value in pixel_values:
-            if pixel_value > self.highlight:
+            if pixel_value - average_value > self.highlight:
                 return pixel_value
         return average_value
         
@@ -138,20 +141,9 @@ class PixelArray():
             self.char_array.append("")
             for cluster in self.list_array[i]:
                 char = get_char_map(output_type, cluster)
-                if char is None:
-                    char = get_char_map("VALUE", (sum(cluster) / len(cluster))//.25)
                 self.char_array.append(char)          
             self.char_array.append("\n")
         self.depth += 1
-
-    # rebuild character_array
-    def refresh(self):
-        self.depth = 0
-        self.normalize(self.threshold)
-        self.combine()
-        self.collapse()
-        self.char_array = []
-        self.list_array_to_char_array(self.display)
 
     # rebuild list_array
     def renew(self):
@@ -160,6 +152,17 @@ class PixelArray():
         self.compression = 0
         self.compress(compression)
         self.refresh()
+
+    # rebuild character_array
+    def refresh(self):
+        self.depth = 0
+        self.normalize(self.threshold)
+        if self.display[1] == "EDGES":
+            self.find_edges()
+        self.combine()
+        self.collapse()
+        self.char_array = []
+        self.list_array_to_char_array(self.display[0])
 
     # set the threshold level
     def set_threshold(self, value):
@@ -188,6 +191,117 @@ class PixelArray():
             self.refresh()
         else:
             raise ValueError(f'Unrecognized display type "{mode.lower()}"')
+
+    # find edges by removing values whose neighbors are the same
+    def find_edges(self):
+        new_array = [[]]
+        for j in range(len(self.normal_array[0])):
+            if j == 0:
+                if (
+                    self.normal_array[0][1] == 1 and
+                    self.normal_array[1][0] == 1 and
+                    self.normal_array[0][0] == 1
+                ):
+                    new_array[0].append(0)
+                else:
+                    new_array[0].append(self.normal_array[0][0])
+            elif j < len(self.normal_array[0]) - 1:
+                if (
+                    self.normal_array[0][j-1] == 1 and
+                    self.normal_array[0][j] == 1 and
+                    self.normal_array[0][j+1] == 1 and
+                    self.normal_array[1][j] == 1
+                ):
+                    new_array[0].append(0)
+                else:
+                    new_array[0].append(self.normal_array[0][j])
+            elif j + 1 == len(self.normal_array[0]):
+                if (
+                    self.normal_array[0][j-1] == 1 and
+                    self.normal_array[1][j] == 1 and
+                    self.normal_array[0][j] == 1
+                ):
+                    new_array[0].append(0)
+                else:
+                    new_array[0].append(self.normal_array[0][j])
+            
+
+        for i in range(1, len(self.normal_array) - 1):
+            if (
+                self.normal_array[i-1][0] == 1 and
+                self.normal_array[i][0] == 1 and
+                self.normal_array[i][1] == 1 and
+                self.normal_array[i+1][0] == 1
+            ):
+                new_array.append([0])
+            else:
+                new_array.append([self.normal_array[i][0]])
+
+            for j in range(1, len(self.normal_array[i]) - 1):
+                if (
+                    self.normal_array[i-1][j] == self.normal_array[i][j] and
+                    self.normal_array[i+1][j] == self.normal_array[i][j] and
+                    self.normal_array[i][j-1] == self.normal_array[i][j] and
+                    self.normal_array[i][j+1] == self.normal_array[i][j] and
+                    self.normal_array[i][j] == 1
+                ):
+                    new_array[i].append(0)
+                else:
+                    new_array[i].append(self.normal_array[i][j])
+            
+            if (
+                self.normal_array[i-1][len(self.normal_array[i]) - 1] == 1 and
+                self.normal_array[i][len(self.normal_array[i]) - 1] == 1 and
+                self.normal_array[i][len(self.normal_array[i]) - 2] == 1 and
+                self.normal_array[i+1][len(self.normal_array[i]) - 1] == 1
+            ):
+                new_array.append([0])
+            else:
+                new_array.append([self.normal_array[i][0]])
+
+        new_array.append([])
+        for j in range(len(self.normal_array[0])):
+            if j == 0:
+                if (
+                    self.normal_array[-1][1] == 1 and
+                    self.normal_array[-2][0] == 1 and
+                    self.normal_array[-1][0] == 1
+                ):
+                    new_array[-1].append(0)
+                else:
+                    new_array[-1].append(self.normal_array[-1][0])
+            if j < len(self.normal_array[0]) - 1:
+                if (
+                    self.normal_array[-1][j-1] == 1 and
+                    self.normal_array[-1][j] == 1 and
+                    self.normal_array[-1][j+1] == 1 and
+                    self.normal_array[-2][j] == 1
+                ):
+                    new_array[-1].append(0)
+                else:
+                    new_array[-1].append(self.normal_array[0][j])
+            if j + 1 == len(self.normal_array):
+                if (
+                    self.normal_array[-1][j-1] == 1 and
+                    self.normal_array[-1][j] == 1 and
+                    self.normal_array[-1][j] == 1
+                ):
+                    new_array[-1].append(0)
+                else:
+                    new_array[-1].append(self.normal_array[0][j])
+        print(len(new_array))
+        print(len(self.normal_array))
+        self.normal_array = new_array
+        self.combine()
+        self.collapse()
+        self.char_array = []
+        self.list_array_to_char_array(self.display[0])
+        
+
+                    
+
+
+
 
     def __repr__(self):
         if self.depth == 0:
