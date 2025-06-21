@@ -7,7 +7,6 @@ class PixelArray():
         self.display = ["VALUE", "FILL"]
         self.depth = 0 # The depth of current collapse. 0 = raw pixel data, 1 = pixel pairs, n = 2+ -> clusters of size 2 ^ n
         self.width = width
-        self.char_width = self.width
         self.height = height
         self.value_array_original = value_array
         self.value_array = copy.deepcopy(value_array)
@@ -16,7 +15,6 @@ class PixelArray():
         self.compression = 0
         self.normal_array = []
         self.normalize()
-        print(self.normal_array)
         self.list_array = [] # A list of lists of pixels as clusters
         self.combine()
         self.collapse()
@@ -37,22 +35,25 @@ class PixelArray():
 
     # combine pixels into pixel pairs because console characters are 2 high and 1 wide
     def combine(self):
+        print("combining pixel pairs")
         self.list_array = []
         self.depth += 1
         for i in range(0, len(self.normal_array), 2):
             # For every two rows, add a list to list_array
-            self.list_array.append([])
+            new_row = []
             for j in range(len(self.normal_array[i])):
                 if i+1 == len(self.normal_array):
-                    self.list_array[i//2].append((self.normal_array[i][j], 0,))
+                    new_row.append((self.normal_array[i][j], 0,))
                 else:
-                    self.list_array[i//2].append((self.normal_array[i][j], self.normal_array[i+1][j],))
+                    new_row.append((self.normal_array[i][j], self.normal_array[i+1][j],))
+            self.list_array.append(new_row)
 
     # collapse list_array -> pixel pairs into pixel clusters
     def collapse(self):
+        print("collapsing pixel clusters")
         new_array = []
         for i in range(0, len(self.list_array), 2):
-            new_array.append([])
+            new_row = []
             for j in range(0, len(self.list_array[i]), 2):
                 pair_1 = self.list_array[i][j]
                 if i+1 == len(self.list_array) and j+1 == len(self.list_array[i]):
@@ -66,7 +67,8 @@ class PixelArray():
                 if i+1 < len(self.list_array) and j+1 < len(self.list_array[i]):
                     pair_4 = self.list_array[i+1][j+1]
                 cluster = pair_1 + pair_2 + pair_3 + pair_4
-                new_array[i//2].append(cluster)
+                new_row.append(cluster)
+            new_array.append(new_row)
         self.depth += 1
         self.list_array = new_array
     
@@ -182,12 +184,15 @@ class PixelArray():
 
     # return size of the output (width, height)
     def get_size(self):
-        return len(self.value_array[0]), len(self.value_array)//2
+        return len(self.list_array[0]), len(self.list_array)
 
     # set the display mode
     def set_display_mode(self, mode):
         if mode == "VALUE" or mode == "DOTS" or mode == "CHARACTERS":
-            self.display = mode
+            self.display[0] = mode
+            self.refresh()
+        elif mode == "EDGES" or mode == "FILL":
+            self.display[1] = mode
             self.refresh()
         else:
             raise ValueError(f'Unrecognized display type "{mode.lower()}"')
@@ -195,6 +200,8 @@ class PixelArray():
     # find edges by removing values whose neighbors are the same
     def find_edges(self):
         new_array = [[]]
+        
+        # Handle the first row
         for j in range(len(self.normal_array[0])):
             if j == 0:
                 if (
@@ -215,7 +222,7 @@ class PixelArray():
                     new_array[0].append(0)
                 else:
                     new_array[0].append(self.normal_array[0][j])
-            elif j + 1 == len(self.normal_array[0]):
+            elif j == len(self.normal_array[0]) - 1:
                 if (
                     self.normal_array[0][j-1] == 1 and
                     self.normal_array[1][j] == 1 and
@@ -225,8 +232,9 @@ class PixelArray():
                 else:
                     new_array[0].append(self.normal_array[0][j])
             
-
+        # Handle middle rows    
         for i in range(1, len(self.normal_array) - 1):
+            # Left-most value in row
             if (
                 self.normal_array[i-1][0] == 1 and
                 self.normal_array[i][0] == 1 and
@@ -237,30 +245,34 @@ class PixelArray():
             else:
                 new_array.append([self.normal_array[i][0]])
 
+            # Middle values in row
             for j in range(1, len(self.normal_array[i]) - 1):
                 if (
-                    self.normal_array[i-1][j] == self.normal_array[i][j] and
-                    self.normal_array[i+1][j] == self.normal_array[i][j] and
-                    self.normal_array[i][j-1] == self.normal_array[i][j] and
-                    self.normal_array[i][j+1] == self.normal_array[i][j] and
+                    self.normal_array[i-1][j] == 1 and
+                    self.normal_array[i+1][j] == 1 and
+                    self.normal_array[i][j-1] == 1 and
+                    self.normal_array[i][j+1] == 1 and
                     self.normal_array[i][j] == 1
                 ):
                     new_array[i].append(0)
                 else:
                     new_array[i].append(self.normal_array[i][j])
             
+            # Last value in row
             if (
                 self.normal_array[i-1][len(self.normal_array[i]) - 1] == 1 and
                 self.normal_array[i][len(self.normal_array[i]) - 1] == 1 and
                 self.normal_array[i][len(self.normal_array[i]) - 2] == 1 and
                 self.normal_array[i+1][len(self.normal_array[i]) - 1] == 1
             ):
-                new_array.append([0])
+                new_array[i].append(0)
             else:
-                new_array.append([self.normal_array[i][0]])
+                new_array[i].append(self.normal_array[i][0])
 
+        # Handle last row
         new_array.append([])
         for j in range(len(self.normal_array[0])):
+            # Handle first value in row
             if j == 0:
                 if (
                     self.normal_array[-1][1] == 1 and
@@ -270,7 +282,8 @@ class PixelArray():
                     new_array[-1].append(0)
                 else:
                     new_array[-1].append(self.normal_array[-1][0])
-            if j < len(self.normal_array[0]) - 1:
+
+            elif j < len(self.normal_array[0]) - 1:
                 if (
                     self.normal_array[-1][j-1] == 1 and
                     self.normal_array[-1][j] == 1 and
@@ -280,7 +293,8 @@ class PixelArray():
                     new_array[-1].append(0)
                 else:
                     new_array[-1].append(self.normal_array[0][j])
-            if j + 1 == len(self.normal_array):
+
+            else:
                 if (
                     self.normal_array[-1][j-1] == 1 and
                     self.normal_array[-1][j] == 1 and
@@ -289,24 +303,9 @@ class PixelArray():
                     new_array[-1].append(0)
                 else:
                     new_array[-1].append(self.normal_array[0][j])
-        print(len(new_array))
-        print(len(self.normal_array))
+        print(new_array[-1])
+        print(self.normal_array[-1])
         self.normal_array = new_array
-        self.combine()
-        self.collapse()
-        self.char_array = []
-        self.list_array_to_char_array(self.display[0])
-        
-
-                    
-
-
-
 
     def __repr__(self):
-        if self.depth == 0:
-            return str(self.value_array)
-        elif self.depth == 1:
-            return str(self.list_array)
-        else:
-            return ''.join(self.char_array)
+        return ''.join(self.char_array)

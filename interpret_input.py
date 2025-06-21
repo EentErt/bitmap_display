@@ -5,7 +5,7 @@ def interpret(array, data):
         with open("help.txt") as file:
             print(file.read())
         user_input = input("Input command: ")
-        interpret(user_input, array)
+        interpret(array, user_input)
         return None
     if data.upper() == "BACK":
         return None
@@ -98,10 +98,6 @@ def change_display(array, mode = None):
             with open("display.txt") as file:
                 print(file.read())
             mode = input("Enter display mode: ")
-
-        if mode.upper() == "EDGES":
-            array.find_edges()
-            return f'Display mode set to "edges"'
 
         try:
             array.set_display_mode(mode.upper())

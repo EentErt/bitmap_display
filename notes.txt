@@ -1,0 +1,3 @@
+Character array still not finished
+image is compressing too much when first opening
+is there a way to implement memory? (up arrow/down arrow functionality)
