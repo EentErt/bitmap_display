@@ -111,7 +111,7 @@ class PixelArray():
         # when compression takes place, an especially light pixel takes precedence to maintain detail
         average_value = sum(pixel_values) // len(pixel_values)
         for pixel_value in pixel_values:
-            if pixel_value - average_value > self.highlight:
+            if pixel_value - average_value >= self.highlight:
                 return pixel_value
         return average_value
         
