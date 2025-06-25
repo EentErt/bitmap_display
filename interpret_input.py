@@ -13,21 +13,21 @@ def interpret(array, data):
     if data.upper() == "COMPRESS":
         try:
             array.compress(1)
-            return None
+            return "Image compressed"
         except Exception as e:
             return e
             
     if data.upper() == "EXPAND":
         try:
             array.expand(1)
-            return None
+            return "Image expanded"
         except Exception as e:
             return e
     
     if data.upper() == "FULL":
         try:
             array.expand(0)
-            return None
+            return "Image expanded to full size"
         except Exception as e:
             return e
 
@@ -40,12 +40,12 @@ def interpret(array, data):
 
     if data.upper() == "SAVE":
         try:
-            save_data(array)
-            return None
+            message = save_data(array)
+            return message
         except Exception as e:
             return e
 
-    interpret_long(array, data.split(" "))
+    return interpret_long(array, data.split(" "))
 
 
 
@@ -64,7 +64,7 @@ def interpret_long(array, data):
         while True:
             try:
                 array.set_threshold(value)
-                return
+                return f"Threshold set to {value}"
             except Exception as e:
                 print(e)
                 print(f'Enter a valid threshold level, or enter "back" to cancel')
@@ -77,7 +77,7 @@ def interpret_long(array, data):
         while True:
             try:
                 array.set_highlight(value)
-                return
+                return f"Highlight level set to {value}"
             except Exception as e:
                 print(e)
                 print(f'Enter a valid highlight level, or enter "back" to cancel')
@@ -87,7 +87,7 @@ def interpret_long(array, data):
                 data[1] = value
 
     if data[0].upper() == "DISPLAY":
-        change_display(array, data[1])
+        return change_display(array, data[1])
 
     if data[0].upper() == "SAVE":
         return save_data(array, data[1])

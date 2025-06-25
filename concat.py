@@ -1,7 +1,7 @@
 import sys
 
 def main():
-    file_list = ["lillian_profile_dots.txt", "lillian_profile_value.txt"]
+    file_list = ["lillian_profile_dots.txt", "lillian_profile_value.txt", "lillian_profile_dots_edges.txt", "lillian_profile_dots.txt"]
     output = combine(file_list)
     with open(sys.argv[1], "w") as write_file:
         write_file.write(output)
@@ -19,7 +19,7 @@ def combine(file_list):
                 if len(output) == i:
                     output.append(lines[i])
                 else:
-                    output[i] += "     " + lines[i]
+                    output[i] += "               " + lines[i]
 
     return '\n'.join(output)
 

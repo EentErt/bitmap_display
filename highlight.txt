@@ -1,0 +1,9 @@
+Set the highlight level for the image.
+
+Syntax: Highlight #(0-255)
+
+When an image is compressed for display, four adjacent pixels are combined
+into a single pixel whose value is the average of the original pixels.
+If one pixel has a value of [highlight level] or greater, the resulting pixel is
+assigned that pixel's value instead. This may result in a greater detail
+retention. For very small values, may introduce some noise in the resulting image.
