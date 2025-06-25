@@ -2,6 +2,7 @@ Commands:
     Compress: Compress values to reduce image size
     Threshold: Set the threshold level between black and white
     Highlight: Set the level to prioritize highlights during compression
+
     Display: Choose the render style of the image
         Values: Display a value representation of the image
         Dots: Display a dot representation of the image
@@ -9,6 +10,8 @@ Commands:
 
         Fill: Fill in areas of solid white
         Edges: Do not fill in areas of solid white
+
+        Save: Save the image output to a text file
 
 Syntax: Enter a command. If the command requires arguments, you may enter them after the command separated by a space. If no argument is given, an explanation of the command will be displayed.
 

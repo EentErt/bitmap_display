@@ -1,49 +1,56 @@
 from file_handling import save_data
+from enum import Enum
+
+Options = Enum("Option", ["HELP", "COMPRESS", "EXPAND", "FULL", "DISPLAY", "SAVE"])
+LongOptions = Enum("LongOption", ["THRESHOLD", "HIGHLIGHT", "DISPLAY", "SAVE"])
+
+def test_input(data):
 
 def interpret(array, data):
-    if data.upper() == "HELP":
-        with open("help.txt") as file:
-            print(file.read())
-        user_input = input("Input command: ")
-        interpret(array, user_input)
-        return None
-    if data.upper() == "BACK":
-        return None
+    match data.upper():
+        case "HELP":
+            with open("help.txt") as file:
+                print(file.read())
+            user_input = input("Input command: ")
+            interpret(array, user_input)
+            return None
+        case "BACK":
+            return None
 
-    if data.upper() == "COMPRESS":
-        try:
-            array.compress(1)
-            return "Image compressed"
-        except Exception as e:
-            return e
-            
-    if data.upper() == "EXPAND":
-        try:
-            array.expand(1)
-            return "Image expanded"
-        except Exception as e:
-            return e
-    
-    if data.upper() == "FULL":
-        try:
-            array.expand(0)
-            return "Image expanded to full size"
-        except Exception as e:
-            return e
+        case "COMPRESS":
+            try:
+                array.compress(1)
+                return "Image compressed"
+            except Exception as e:
+                return e
+                
+        case "EXPAND":
+            try:
+                array.expand(1)
+                return "Image expanded"
+            except Exception as e:
+                return e
+        
+        case "FULL":
+            try:
+                array.expand(0)
+                return "Image expanded to full size"
+            except Exception as e:
+                return e
 
-    if data.upper() == "DISPLAY":
-        try:
-            message = change_display(array)
-            return message
-        except Exception as e:
-            return e
+        case "DISPLAY":
+            try:
+                message = change_display(array)
+                return message
+            except Exception as e:
+                return e
 
-    if data.upper() == "SAVE":
-        try:
-            message = save_data(array)
-            return message
-        except Exception as e:
-            return e
+        case "SAVE":
+            try:
+                message = save_data(array)
+                return message
+            except Exception as e:
+                return e
 
     return interpret_long(array, data.split(" "))
 
