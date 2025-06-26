@@ -15,7 +15,7 @@ def interpret(array, data):
             return e
     match data.upper():
         case "HELP":
-            with open("help.txt") as file:
+            with open("documentation/help.txt") as file:
                 print(file.read())
             user_input = input("Input command: ")
             interpret(array, user_input)
@@ -65,6 +65,8 @@ def interpret_long(array, data):
                     data[1] = value
         case "HIGHLIGHT":
             if len(data) == 1:
+                with open("documentation/highlight.txt") as file:
+                print(file.read())
                 value = input("Enter a highlight value: ")
                 data.append(value)
             while True:
@@ -90,7 +92,7 @@ def interpret_long(array, data):
 def change_display(array, mode = None):
     while True:
         if mode is None:
-            with open("display.txt") as file:
+            with open("documentation/display.txt") as file:
                 print(file.read())
             mode = input("Enter display mode: ")
         try:
