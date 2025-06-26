@@ -1,4 +1,4 @@
-from char_map import get_char_map
+from functions.char_map import get_char_map
 import copy
 import math
 

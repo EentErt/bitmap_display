@@ -1,4 +1,4 @@
-from file_handling import save_data
+from functions.file_handling import save_data
 from enum import Enum
 
 Options = Enum("Option", ["HELP", "COMPRESS", "EXPAND", "FULL"])
@@ -66,7 +66,7 @@ def interpret_long(array, data):
         case "HIGHLIGHT":
             if len(data) == 1:
                 with open("documentation/highlight.txt") as file:
-                print(file.read())
+                    print(file.read())
                 value = input("Enter a highlight value: ")
                 data.append(value)
             while True:

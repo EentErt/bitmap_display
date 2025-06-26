@@ -1,8 +1,8 @@
-from analysis import analyze, get_values
-from pixel_array import create_pixel_array
-from char_map import value_array_to_char_array
-from array_object import PixelArray
-from interpret_input import interpret
+from functions.analysis import analyze, get_values
+from functions.pixel_array import create_pixel_array
+from functions.char_map import value_array_to_char_array
+from objects.array_object import PixelArray
+from functions.interpret_input import interpret
 import sys
 import os
 import shutil

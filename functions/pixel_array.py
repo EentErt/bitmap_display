@@ -1,4 +1,4 @@
-from analysis import byte_reverse
+from functions.analysis import byte_reverse
 
 def create_pixel_array(image_dict):
     # Create a pixel array as a list of lists
